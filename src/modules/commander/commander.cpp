@@ -92,7 +92,6 @@
 #include <uORB/topics/telemetry_status.h>
 #include <uORB/topics/vtol_vehicle_status.h>
 #include <uORB/topics/vehicle_land_detected.h>
-#include <uORB/topics/input_rc.h>
 #include <uORB/topics/vehicle_command_ack.h>
 #include <uORB/topics/mavlink_log.h>
 #include <uORB/topics/cpuload.h>
