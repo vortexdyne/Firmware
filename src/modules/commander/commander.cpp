@@ -1186,6 +1186,7 @@ int commander_thread_main(int argc, char *argv[])
 	param_t _param_geofence_action = param_find("GF_ACTION");
 	param_t _param_disarm_land = param_find("COM_DISARM_LAND");
 	param_t _param_low_bat_act = param_find("COM_LOW_BAT_ACT");
+	param_t _param_arm_without_gps = param_find("COM_ARM_WO_GPS");
 
 	param_t _param_fmode_1 = param_find("COM_FLTMODE1");
 	param_t _param_fmode_2 = param_find("COM_FLTMODE2");
@@ -1505,8 +1506,10 @@ int commander_thread_main(int argc, char *argv[])
 	// Run preflight check
 	int32_t rc_in_off = 0;
 	bool hotplug_timeout = hrt_elapsed_time(&commander_boot_timestamp) > HOTPLUG_SENS_TIMEOUT;
+	int32_t arm_without_gps = 0;
 	param_get(_param_autostart_id, &autostart_id);
 	param_get(_param_rc_in_off, &rc_in_off);
+	param_get(_param_arm_without_gps, &arm_without_gps);
 	status.rc_input_mode = rc_in_off;
 	if (is_hil_setup(autostart_id)) {
 		// HIL configuration selected: real sensors will be disabled
@@ -1516,7 +1519,7 @@ int commander_thread_main(int argc, char *argv[])
 			// sensor diagnostics done continuously, not just at boot so don't warn about any issues just yet
 			status_flags.condition_system_sensors_initialized = Commander::preflightCheck(&mavlink_log_pub, true, true, true, true,
 				checkAirspeed, (status.rc_input_mode == vehicle_status_s::RC_IN_MODE_DEFAULT),
-				!status_flags.circuit_breaker_engaged_gpsfailure_check, false);
+				(arm_without_gps == 0), false);
 			set_tune_override(TONE_STARTUP_TUNE); //normal boot tune
 	}
 
@@ -1626,6 +1629,7 @@ int commander_thread_main(int argc, char *argv[])
 			param_get(_param_geofence_action, &geofence_action);
 			param_get(_param_disarm_land, &disarm_when_landed);
 			param_get(_param_low_bat_act, &low_bat_action);
+			param_get(_param_arm_without_gps, &arm_without_gps);
 
 			/* Autostart id */
 			param_get(_param_autostart_id, &autostart_id);
@@ -1720,7 +1724,7 @@ int commander_thread_main(int argc, char *argv[])
 					} else {
 						/* check sensors also */
 						(void)Commander::preflightCheck(&mavlink_log_pub, true, true, true, true, chAirspeed,
-								(status.rc_input_mode == vehicle_status_s::RC_IN_MODE_DEFAULT), !status_flags.circuit_breaker_engaged_gpsfailure_check, hotplug_timeout);
+								(status.rc_input_mode == vehicle_status_s::RC_IN_MODE_DEFAULT), (arm_without_gps == 0), hotplug_timeout);
 					}
 				}
 
@@ -3702,7 +3706,7 @@ void *commander_low_prio_loop(void *arg)
 						}
 
 						status_flags.condition_system_sensors_initialized = Commander::preflightCheck(&mavlink_log_pub, true, true, true, true, checkAirspeed,
-							!(status.rc_input_mode >= vehicle_status_s::RC_IN_MODE_OFF), !status_flags.circuit_breaker_engaged_gpsfailure_check, hotplug_timeout);
+							!(status.rc_input_mode >= vehicle_status_s::RC_IN_MODE_OFF), false, hotplug_timeout);
 
 						arming_state_transition(&status,
 									&battery,
