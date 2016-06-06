@@ -76,6 +76,7 @@ struct status_flags_s {
 	bool circuit_breaker_engaged_airspd_check;
 	bool circuit_breaker_engaged_enginefailure_check;
 	bool circuit_breaker_engaged_gpsfailure_check;
+	bool circuit_breaker_flight_termination_disabled;
 	bool cb_usb;
 	bool offboard_control_signal_found_once;
 	bool offboard_control_signal_lost;
